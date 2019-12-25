@@ -32,7 +32,7 @@ app.get('/api/chat', function(req, res){
     {'fullname' : 'Si C', 'message' : 'Hello World'},
     {'fullname' : 'Si D', 'message' : 'Hello World'}]
 
-    res.send({'status_code' : 200, 'result' : dummy}).statusCode(200)
+    res.send({'status_code' : 200, 'results' : dummy}).statusCode(200)
 })
 
 
