@@ -27,10 +27,10 @@ app.use(helmet())
 
 app.get('/api/chat', function(req, res){
     // Dummy Data
-    const dummy = [{'fullname' : 'Si A', 'message' : 'Hello World'},
-    {'fullname' : 'Si B', 'message' : 'Hello World'},
-    {'fullname' : 'Si C', 'message' : 'Hello World'},
-    {'fullname' : 'Si D', 'message' : 'Hello World'}]
+    const dummy = [{'from' : 'usera', 'to' : 'usere' ,'message' : 'Hello World', 'datetime' : '19 April 2019 13:30'},
+                   {'from' : 'userb', 'to' : 'usere' ,'message' : 'Hello World', 'datetime' : '19 April 2019 12:30'},
+                   {'from' : 'userc', 'to' : 'usere' ,'message' : 'Hello World', 'datetime' : '19 April 2019 05:30'},
+                   {'from' : 'userd', 'to' : 'usere' ,'message' : 'Hello World', 'datetime' : '19 April 2019 05:10'}]
 
     res.send({'status_code' : 200, 'results' : dummy}).statusCode(200)
 })
