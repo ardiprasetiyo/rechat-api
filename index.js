@@ -1,6 +1,6 @@
 const app = require('express')()
 const http = require('http').createServer(app)
-const io = require('socket.io')
+const io = require('socket.io')(http)
 const bodyParser = require('body-parser')
 const helmet = require('helmet')
 
@@ -25,6 +25,10 @@ app.use(helmet())
 
 // ROUTING TABLE
 
+app.get('/', (req,res) => {
+    res.sendFile(__dirname + '/test.html')
+})
+
 app.get('/api/chat', function(req, res){
     // Dummy Data
     const dummy = [{'from' : 'usera', 'to' : 'usere' ,'message' : 'Hello World', 'datetime' : '19 April 2019 13:30'},
@@ -33,6 +37,18 @@ app.get('/api/chat', function(req, res){
                    {'from' : 'userd', 'to' : 'usere' ,'message' : 'Hello World', 'datetime' : '19 April 2019 05:10'}]
 
     res.send({'status_code' : 200, 'results' : dummy}).statusCode(200)
+})
+
+
+io.on('connection', function(socket){
+
+    console.log("Client Connected")
+
+    socket.on('chat', function(data){
+        console.log(data)
+        socket.emit(data.to, data.message)
+    })
+
 })
 
 

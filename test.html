@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Hello</title>
+	<script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <h1>API TESTING</h1>
+
+    <input type="text" id="from">
+    <input type="text" id="to">
+    <input type="text" id="message">
+    <button id="submit" onclick="process()">Submit</button>
+
+	<script>
+        var socket = io();
+        
+        function process(){
+        const from = document.getElementById('from').value
+        const to = document.getElementById('to').value
+        const msg = document.getElementById('message').value
+
+        socket.emit('chat', {'from' : from, 'to' : to, 'message' : msg})
+
+        socket.on(from, function(msg){
+            console.log(msg)
+			alert(msg)
+        })
+
+    }
+        
+	</script>
+</body>
+</html>
