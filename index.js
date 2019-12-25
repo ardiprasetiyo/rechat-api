@@ -36,6 +36,6 @@ app.get('/api/chat', function(req, res){
 
 
 
-http.listen(proccess.env.PORT || 80, function(){
+http.listen(process.env.PORT || 80, function(){
     console.log('Server is Listening')
 })

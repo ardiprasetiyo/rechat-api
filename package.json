@@ -4,7 +4,7 @@
   "description": "Online Chat API",
   "main": "index.js",
   "scripts": {
-    "test": "npm start"
+    "start" : "node index.js"
   },
   "author": "Ardi n Septian",
   "license": "ISC",
