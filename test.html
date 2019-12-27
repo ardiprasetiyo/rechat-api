@@ -9,26 +9,22 @@
 
     <input type="text" id="from">
     <input type="text" id="to">
+    <input type="text" id="room">
     <input type="text" id="message">
     <button id="submit" onclick="process()">Submit</button>
 
 	<script>
-        var socket = io();
-        
+        var socket = io().connect('http://localhost/')
         function process(){
-        const from = document.getElementById('from').value
-        const to = document.getElementById('to').value
-        const msg = document.getElementById('message').value
+            var from = document.getElementById('from').value
+            socket.emit('register id', ({'userid' : from}))
+            var to = document.getElementById('to').value
+            var room = document.getElementById('room').value
+            socket.emit('join room', {'room' : room})
+            var message = document.getElementById('message').value
 
-        socket.emit('chat', {'from' : from, 'to' : to, 'message' : msg})
-
-        socket.on(from, function(msg){
-            console.log(msg)
-			alert(msg)
-        })
-
-    }
-        
+            socket.on('message', (data) => {alert(data)})
+        }
 	</script>
 </body>
 </html>

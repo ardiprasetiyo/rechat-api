@@ -39,19 +39,37 @@ app.get('/api/chat', function(req, res){
     res.send({'status_code' : 200, 'results' : dummy}).statusCode(200)
 })
 
-
-io.on('connection', function(socket){
-
-    console.log("Client Connected")
-
-    socket.on('chat', function(data){
-        console.log(data)
-        socket.emit(data.to, data.message)
-    })
-
+app.get('/api/socket/connect', function(req, res){
+    res.send('OK!')
 })
 
 
+var clients = []
+
+
+io.sockets.on('connection', (socket) => {
+    var clientInfo = new Object()
+    clientInfo.socketid = socket.id
+    clients.push(clientInfo)
+
+    socket.on('register id', (data) => {
+        const clientIndex = clients.findIndex(e => { return e.socketid == socket.id })
+        clients[clientIndex].userid = data.userid
+        console.log(clients)
+    })
+
+    socket.on('join room', (data) => {
+        socket.join(data.room)
+        socket.to(data.room).emit('message', 'hello slur')
+    })
+
+    socket.on('disconnect', () => {
+       clients = clients.filter(e => {
+            return e.socketid != socket.id
+        })
+        
+    })
+})
 
 
 http.listen(process.env.PORT || 80, function(){
