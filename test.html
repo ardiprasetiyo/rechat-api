@@ -7,10 +7,10 @@
 <body>
     <h1>API TESTING</h1>
 
-    <input type="text" id="from">
-    <input type="text" id="to">
-    <input type="text" id="room">
-    <input type="text" id="message">
+    <input type="text" id="from" placeholder="Insert Your Name">
+    <input type="text" id="to" placeholder="Insert Your Target">
+    <input type="text" id="room" placeholder="Insert A Room Name">
+    <!-- <input type="text" id="message" placeholder=""> -->
     <button id="submit" onclick="process()">Submit</button>
 
 	<script>
@@ -20,8 +20,8 @@
             socket.emit('register id', ({'userid' : from}))
             var to = document.getElementById('to').value
             var room = document.getElementById('room').value
-            socket.emit('join room', {'room' : room})
-            var message = document.getElementById('message').value
+            socket.emit('join room', {'room' : room, 'fromUser' : from})
+            // var message = document.getElementById('message').value
 
             socket.on('message', (data) => {alert(data)})
         }

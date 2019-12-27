@@ -60,7 +60,7 @@ io.sockets.on('connection', (socket) => {
 
     socket.on('join room', (data) => {
         socket.join(data.room)
-        socket.to(data.room).emit('message', 'hello slur')
+        socket.to(data.room).emit('message', 'hello slur from ' + data.fromUser)
     })
 
     socket.on('disconnect', () => {
