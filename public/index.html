@@ -35,7 +35,7 @@
                 </div>
 
                 <div class="col-lg-7 mt-4 p-4">
-                    <div class="card" style="min-height: 500px; overflow-y: scroll;">
+                    <div class="card" name="chat-container" style="min-height: 500px; max-height: 500px; overflow-y: auto;">
                         <div class="card-body">
                             <input type="text" class="form-control mb-3" name="targetID" placeholder="Insert Your Friends ID">
                             <div class="row">
@@ -109,6 +109,8 @@
                                     </div>`)
 
             socket.emit('send', {'senderID' : myid ,'targetID' : targetID, 'message' : message})
+            let scrollPosition = $('div[name=chat-container]').prop('scrollHeight')
+            $('div[name=chat-container]').scrollTop(scrollPosition)
        })
 
         socket.on('message', (data) => {
@@ -122,6 +124,8 @@
                                             </div>
                                         </div>
                                     </div>`)
+            let scrollPosition = $('div[name=chat-container]').prop('scrollHeight')
+            $('div[name=chat-container]').scrollTop(scrollPosition)
         })
 
         socket.on('connect', () => {
