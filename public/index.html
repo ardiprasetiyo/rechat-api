@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Hello</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/jquery.js"></script>
+    <script src="/js/bootstrap.js"></script>
+    <script src="/js/bootstrap.bundle.js"></script>
+    <link rel="stylesheet" href="/css/bootstrap-grid.css">
+    <link rel="stylesheet" href="/css/bootstrap.css">
+    <link rel="stylesheet" href="/css/bootstrap-reboot.css">
+    <style>
+        .bg-chatin{
+            background-color: #99ff99;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="main-section">
+        <div class="col-lg-12">
+            <div class="row">
+                <div class="col-lg-3 offset-lg-1 mt-4 p-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5>CHAT APP DEMO</h5>
+                            <p class="small">Your ID Will Appear Below</p>
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <input type="text" class="form-control" id="my-id" placeholder="Your ID Is 203786" disabled >
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-7 mt-4 p-4">
+                    <div class="card" style="min-height: 500px; overflow-y: scroll;">
+                        <div class="card-body">
+                            <input type="text" class="form-control mb-3" name="targetID" placeholder="Insert Your Friends ID">
+                            <div class="row">
+                                <div class="col-lg-12" name="chat-room">
+                                    
+                                    <div class="row">
+                                        <div class="col-lg-6">
+                                            <div class="card bg-chatin mb-3">
+                                                <div class="card-body">
+                                                   Please Insert Your Friends ID
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- <div class="row">
+                                        <div class="col-lg-6 offset-lg-6">
+                                            <div class="card mb-3">
+                                                <div class="card-body">
+                                                    asdaad
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div> -->
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mt-3">
+                        <div class="card-body">
+                            <input type="text" name="message" class="form-control">
+                            <button class="btn btn-success mt-2 form-control" name="send">Send</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+	<script>
+
+        let myid = Math.random().toString()
+        myid = myid.split('.')[1]
+        
+        var socket = io().connect('http://localhost/', {
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax : 5000,
+            reconnectionAttempts: 99999
+        })
+       
+        $('#my-id').val(myid)
+
+       $('button[name=send]').on('click', function(){
+           console.log("SEND!")
+
+            let targetID = $('input[name=targetID').val()
+            let message = $('input[name=message]').val()
+
+            $('div[name=chat-room]').append(`<div class="row">
+                                        <div class="col-lg-6 offset-lg-6">
+                                            <div class="card mb-3">
+                                                <div class="card-body">
+                                                    ${message}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>`)
+
+            socket.emit('send', {'senderID' : myid ,'targetID' : targetID, 'message' : message})
+       })
+
+        socket.on('message', (data) => {
+            $('div[name=chat-room]').append(`<div class="row">
+                                        <div class="col-lg-6">
+                                            <div class="card bg-chatin mb-3">
+                                                <div class="card-body">
+                                                    <h4 class="small">${data.senderID}</h4>
+                                                    ${data.message}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>`)
+        })
+
+        socket.on('connect', () => {
+            socket.emit('registerUser', {'userID' : myid})
+        })
+
+        socket.on('disconnect', () => {
+            console.log("Socket Disconnected")
+        })
+        
+	</script>
+</body>
+</html>
