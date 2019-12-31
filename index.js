@@ -2,9 +2,13 @@ const express = require('express')
 const app = express()
 const path = require('path')
 const http = require('http').createServer(app)
-const io = require('socket.io')(http)
+const io = require('socket.io')(http, {
+    pingInterval: 500,
+    pingTimeout: 1000
+})
 const bodyParser = require('body-parser')
 const helmet = require('helmet')
+const queueHelper = require('./helper_modules/queueHelper.js')
 
 // FORCE HTTPS (HEROKU)
 app.use(function(req, res, next) {
@@ -45,81 +49,100 @@ app.get('/api/chat', function(req, res){
 
 
 let users = []
-let emitQueue = []
+let messageQueue = []
 
+const UserJSON = (socketID) => {
+    let User = {}
+    User.socketID = socketID
+    return User
+}
 
-io.sockets.on('connect', (socket) => {
+const MessageJSON = (senderID, receiverID, messageID, message) => {
+    let Message = {}
+    Message.senderID = senderID
+    Message.receiverID = receiverID
+    Message.messageID = messageID
+    Message.message = message
+    Message.isRead = 0 
+    return Message
+}
+
+io.on('connection', (socket) => {
 
     const socketID = socket.id
-    let userJSON = {'socketID' : socketID}
+    const userJSON = new Object(UserJSON(socketID))
     users.push(userJSON)
-
-    socket.on('registerUser', (data) => {
     
-    console.log(data.userID)
-    console.log(emitQueue)
-
-       const userID = data.userID
-       const socketID = socket.id
-
-       // Search For Socket
-       let userIndex = users.findIndex((e) => {
-           return e.socketID == socketID
-       })
-
-       users[userIndex].userID = userID
-       
-       let inQueue = emitQueue.findIndex( e => {
-           return e.targetID == userID
-       })
-    
-       if( inQueue >= 0 ){
-        console.log(emitQueue[inQueue].message)
-        io.sockets.to(socketID).emit('message', {'message' : emitQueue[inQueue].message, 'senderID' : emitQueue[inQueue].senderID})
-        emitQueue = emitQueue.filter((e) => {
-            return e.targetID != userID
+    socket.on('userConnect', (data) => {
+        const userID = data.userID
+        const socketID = socket.id
+        users.forEach((e) => {
+            if( e.socketID == socketID ){
+                e.userID = userID
+                return true
+            }
         })
-        console.log(emitQueue)
-       }
 
     })
 
-    // TESTING EMIT
     socket.on('send', (data) => {
-        const message = data.message
-        const userID = data.targetID
         const senderID = data.senderID
+        const receiverID = data.receiverID
+        const messageID = Math.random().toString().split('.')[1]
+        const message = data.message
+        // Need Validation Here
 
-        console.log(emitQueue)
-        console.log(users)
+        const messageJSON = new Object(MessageJSON(senderID, receiverID, messageID, message))
+        messageQueue.push(messageJSON)
 
-        // Finding Socket
-        const targetIndex = users.findIndex( (e) => {
-            return e.userID == userID
-        })
-       
-        if( targetIndex < 0 ){
-            let Queue = {'senderID' : senderID ,'targetID' : userID, 'message' : message}
-            emitQueue.push(Queue) 
-            io.sockets.to(socket.id).emit('message', 'Message Will Be Forwarded ')
-            return 0
+        // Emit To Receiver
+        const receiverSocket = queueHelper.findSocket(receiverID, users)
+        if( receiverSocket ){
+            socket.to(`${receiverSocket.socketID}`).emit('incomingMessage', {'messageID' : messageID})
         }
-        const socketTarget = users[targetIndex].socketID
-        socket.to(socketTarget).emit('message', {'message' : message, 'senderID' : senderID})
+
+        // Emit To Self
+        io.sockets.to(`${socket.id}`).emit('sendCallback', messageJSON)
+    })
+    
+    socket.on('getMessage', (data) => {
+        const messageID = data.messageID
+        const message = queueHelper.findMessage(messageID, messageQueue)
+        if( message ){
+            io.sockets.to(`${socket.id}`).emit('message', message)
+            
+            // Update Status Message To Sender
+            const senderSocket = queueHelper.findSocket(message.senderID, users)
+            if( senderSocket ){
+                socket.to(`${senderSocket.socketID}`).emit('sendUpdate', {'messageID' : messageID})
+            }
+
+            messageQueue.forEach((e) => {
+                if( e.messageID == messageID ){
+                    e.isRead = 1
+                }
+            })
+        }
+
+    })
+
+    socket.on('checkingMessage', (data) => {
+        const userID = data.userID
+        messageQueue.forEach((e) => {
+            if( e.receiverID == userID && e.isRead == 0 ){
+                io.sockets.to(`${socket.id}`).emit('message', e)
+            }
+        })
     })
 
     socket.on('disconnect', () => {
         const socketID = socket.id
-        users = users.filter(e => {
+        users = users.filter((e) => {
             return e.socketID != socketID
         })
     })
 
-    socket.on('reconnect', () => {
-        socket.id
-    })
 })
-
 
 http.listen(process.env.PORT || 80, function(){
     console.log('Server is Listening')

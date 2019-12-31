@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="/css/bootstrap-grid.css">
     <link rel="stylesheet" href="/css/bootstrap.css">
     <link rel="stylesheet" href="/css/bootstrap-reboot.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         .bg-chatin{
             background-color: #99ff99;
@@ -85,33 +86,59 @@
         
         var socket = io().connect('http://localhost/', {
             reconnection: true,
-            reconnectionDelay: 1000,
+            reconnectionDelay: 500,
             reconnectionDelayMax : 5000,
-            reconnectionAttempts: 99999
+            reconnectionAttempts: 99999999
         })
        
         $('#my-id').val(myid)
 
        $('button[name=send]').on('click', function(){
-           console.log("SEND!")
 
             let targetID = $('input[name=targetID').val()
             let message = $('input[name=message]').val()
 
-            $('div[name=chat-room]').append(`<div class="row">
+            if( targetID == '' ){
+                alert('Insert Your Friends ID')
+                return false
+            }
+
+            if( message == '' ){
+                alert('Message Is Empty')
+                return false
+            }
+
+            socket.emit('send', {'senderID' : myid ,'receiverID' : targetID, 'message' : message})
+       })
+
+       socket.on('sendCallback', (data) => {
+        let message = data.message
+        let messageID = data.messageID
+        
+        $('div[name=chat-room]').append(`<div class="row">
                                         <div class="col-lg-6 offset-lg-6">
                                             <div class="card mb-3">
                                                 <div class="card-body">
-                                                    ${message}
+                                                    ${message} <p class="small mb-0 mt-2" name="message-status" messageID="${messageID}" ><b>Terkirim</b> Penerima Offline</p>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>`)
-
-            socket.emit('send', {'senderID' : myid ,'targetID' : targetID, 'message' : message})
-            let scrollPosition = $('div[name=chat-container]').prop('scrollHeight')
-            $('div[name=chat-container]').scrollTop(scrollPosition)
+        let scrollPosition = $('div[name=chat-container]').prop('scrollHeight')
+        $('div[name=chat-container]').scrollTop(scrollPosition)
        })
+
+       socket.on('sendUpdate', (data) => {
+            const messageID = data.messageID
+            $(`p[messageid=${messageID}]`).html('<b>Terkirim</b> <span style="color:green">Penerima Online</span>')
+       })
+
+
+       socket.on('incomingMessage', (data) => {
+           const messageID = data.messageID
+           socket.emit('getMessage', ({'messageID' : messageID}))
+       })
+
 
         socket.on('message', (data) => {
             $('div[name=chat-room]').append(`<div class="row">
@@ -129,12 +156,22 @@
         })
 
         socket.on('connect', () => {
-            socket.emit('registerUser', {'userID' : myid})
+            $(document).ready(function(){
+                $('button[name=send]').attr('disabled', false)
+                $('button[name=send]').css({'background-color' : 'green', 'border-color' : 'green'})
+            })
+            socket.emit('userConnect', {'userID' : myid})
+            socket.emit('checkingMessage', {'userID' : myid})
         })
 
         socket.on('disconnect', () => {
-            console.log("Socket Disconnected")
+            $(document).ready(function(){
+                $('button[name=send]').attr('disabled', true)
+                $('button[name=send]').css({'background-color' : 'grey', 'border-color' : 'grey'})
+            })
         })
+
+       
         
 	</script>
 </body>
