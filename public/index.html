@@ -117,7 +117,7 @@
         
         $('div[name=chat-room]').append(`<div class="row">
                                         <div class="col-lg-6 offset-lg-6">
-                                            <div class="card mb-3">
+                                            <div class="card mb-3" style="border-radius: 20px 0px 20px 20px;">
                                                 <div class="card-body">
                                                     ${message} <p class="small mb-0 mt-2" name="message-status" messageID="${messageID}" ><b>Terkirim</b> Penerima Offline</p>
                                                 </div>
@@ -143,7 +143,7 @@
         socket.on('message', (data) => {
             $('div[name=chat-room]').append(`<div class="row">
                                         <div class="col-lg-6">
-                                            <div class="card bg-chatin mb-3">
+                                            <div class="card bg-chatin mb-3" style="border-radius: 0px 20px 20px 20px;">
                                                 <div class="card-body">
                                                     <h4 class="small">${data.senderID}</h4>
                                                     ${data.message}
