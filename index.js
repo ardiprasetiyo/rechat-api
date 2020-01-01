@@ -130,6 +130,7 @@ io.on('connection', (socket) => {
         const userID = data.userID
         messageQueue.forEach((e) => {
             if( e.receiverID == userID && e.isRead == 0 ){
+                e.isRead = 1
                 io.sockets.to(`${socket.id}`).emit('message', e)
             }
         })
