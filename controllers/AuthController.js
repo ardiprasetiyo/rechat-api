@@ -4,8 +4,6 @@ const bcryptjs = require('bcryptjs')
 
 const register = ( req, res ) => {
 
-    date
-
     let userData = {
         'username': req.body.username,
         'password': bcryptjs.hashSync(req.body.password, 8),
