@@ -3,17 +3,18 @@ const fs = require('fs')
 
 const secret = fs.readFileSync('./bin/jwt.secret.key')
 
-const jwtVerify = (req, res, next) => {
-    if( req.path == '/' ) return next()
-  
-    const token = req.headers.authorization
+const jwtVerify = (data) => {
+    const token = data
     if( !token ) return res.status(403).send({'statusCode' : 403, 'message' : 'Forbidden Access'}).end()
   
     try {
       let decode = jwt.verify(token, secret)
-      next()
+
+      // Need To Verify The Expired Time
+
+      return decode
     } catch(err) {
-      return res.status(403).send({'statusCode' : 403, 'message' : 'Invalid Key'}).end()
+      return false
     }
     
   }

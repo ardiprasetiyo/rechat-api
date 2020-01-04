@@ -31,7 +31,13 @@ exports.registerSchema = (req, res, next) => {
 
                 check('bio').
                 trim().
-                escape() ]
+                escape(),
+            
+                check('email').trim()
+                .notEmpty().
+                withMessage('Email is required').
+                isEmail().
+                withMessage('Email Must Be A Valid Email')]
 }
 
 
@@ -46,6 +52,40 @@ exports.loginSchema = (req, res) => {
             notEmpty().
             withMessage('Password is required')]
 } 
+
+exports.forgotVerifySchema = (req, res) => {
+    return [ check('userID').trim().
+             notEmpty().
+             withMessage('No UserID Found').
+             escape(),
+            
+             check('password').
+             trim().
+             notEmpty().
+             withMessage('Password is required').
+             isLength({min:8}).
+             withMessage('Minimum length of password is 8 characters').
+             escape(),
+
+             check('verifyCode').
+             trim().
+             notEmpty().
+             withMessage('Verification Code is required').
+             escape(),
+            
+            check('re-password').
+            trim().
+            notEmpty().
+            withMessage('Please retyping your password').escape().
+            custom((value ,{req}) => {
+                if (value !== req.body.password) {
+                        // trow error if passwords do not match
+                        throw new Error("Passwords don't match");
+                    } else {
+                        return value;
+                    }
+            })]
+}
 
 
 exports.validate = (req, res, next) => {

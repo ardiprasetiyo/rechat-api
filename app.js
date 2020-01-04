@@ -1,5 +1,6 @@
 const createError = require('http-errors')
 const express = require('express')
+const app = express()
 const path = require('path')
 const cookieParser = require('cookie-parser')
 const logger = require('morgan')
@@ -11,7 +12,7 @@ mongoose.connect(mongoDB, { useNewUrlParser: true })
 const db = mongoose.connection;
 
 db.on('error', () =>{
-  res.status(500).send({'statusCode' : 500, 'message' : 'Internal DB Server Error'})
+  console.log('DB Disconnected')
 })
 db.once('open', () => {
   console.log("DB Connected")
@@ -19,8 +20,6 @@ db.once('open', () => {
 
 // Route Instance
 const authRouter = require('./routes/auth')
-
-const app = express();
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));

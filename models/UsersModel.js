@@ -31,6 +31,11 @@ const userSchema = new mongoose.Schema({
       default: 'Hello Everyone!'
     },
 
+    email: {
+      type: String,
+      require: [true, 'Email is required']
+    },
+
     contact: {
       type: String,
       default: '{}'
@@ -58,7 +63,8 @@ let UserModel = {
           username:  data.username,
           password:  data.password,
           fullname:  data.fullname,
-          biography: data.biography || undefined
+          biography: data.biography || undefined,
+          email: data.email
       })
     },
     

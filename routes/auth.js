@@ -7,5 +7,7 @@ const validationSchema = require('../middleware/validator-schema')
 /* GET home page. */
 router.post('/register',  validationSchema.registerSchema(), validationSchema.validate, AuthController.register)
 router.post('/login', validationSchema.loginSchema(), validationSchema.validate, AuthController.login)
+router.post('/forgot', AuthController.forgotPassword)
+router.post('/forgot/verify', validationSchema.forgotVerifySchema(), validationSchema.validate, AuthController.forgotVerify)
 
 module.exports = router;
