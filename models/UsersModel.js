@@ -43,7 +43,7 @@ const userSchema = new mongoose.Schema({
 
     token: {
       type: String,
-      required: true
+      default: ''
     }
   })
 
@@ -58,9 +58,7 @@ let UserModel = {
           username:  data.username,
           password:  data.password,
           fullname:  data.fullname,
-          biography: data.biography || undefined,
-          token: data.token
-
+          biography: data.biography || undefined
       })
     },
     
