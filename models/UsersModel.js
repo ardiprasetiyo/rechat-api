@@ -2,7 +2,6 @@ const mongoose = require('mongoose')
 const uniqid = require('uniqid')
 
 const userSchema = new mongoose.Schema({
-
     userID : {
       type: String,
       default: uniqid(),
