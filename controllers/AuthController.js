@@ -9,7 +9,6 @@ const register = ( req, res ) => {
         'password': bcryptjs.hashSync(req.body.password, 8),
         'fullname': req.body.fullname,
         'biography': req.body.bio,
-        'token': jwtHelper.jwtGenerate({username: this.username, expired: Date.now() + 99999})
     }
 
     let result = UsersModel.createUser(userData)
