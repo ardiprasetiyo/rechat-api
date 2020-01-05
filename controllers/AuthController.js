@@ -1,5 +1,5 @@
 const UsersModel = require('../models/UsersModel')
-const verificationModel = require('../models/VerificationModel')
+const tokenModel = require('../models/TokenModel')
 const jwtHelper = require('../middleware/jwt-helper')
 const bcryptjs = require('bcryptjs')
 const gmailSend = require('gmail-send')
@@ -55,22 +55,17 @@ const login = (req, res) =>{
                 res.status(403).send({'statusCode' : 403, 'message' : `Username ${username} founded but invalid password`}).end()
             }
         })
-
-        const token = jwtHelper.jwtGenerate({'userID' : userID, 'expiredDate' : Date.now() + 99999999})
-
         
+
+        const token = jwtHelper.jwtGenerate({'userID' : userID}, ( 60 * 60 * 24 * 7 * 4 ))
+
         // Preparing UserData For Response
         const userJSON = {userID, username, fullname, bio, contact, profilePicture, token}
 
-        // Updating User Token
-        UsersModel.updateUser({'userID' : userID}, {'token' : token}).then((result) => {
-            res.status(200).send({'statusCode' : 200, 'message' : 'Login Sucess', 'data' : userJSON})
-        }).catch((err) =>{
-            throw new Error('Failed Updating Token')
-        })
-
+        res.status(200).send({'statusCode' : 200, 'message' : 'Login Sucess', 'data' : userJSON}).end()
 
     }).catch((err) => {
+        console.log(err)
         res.status(500).send({'statusCode' : 500, 'message' : 'Something Wrong'})
     })
 
@@ -86,39 +81,55 @@ const forgotPassword = ( req, res ) => {
         const userID = result.userID
         const verifyCode = Math.random().toString().split('.')[1].substr(0, 4)
 
-        console.log(verifyCode)
-
         gmailConfig.to = userEmail
         gmailConfig.subject = 'Password Recovery'
         gmailConfig.text = `Your Code Is ${verifyCode}`
         
         gmailSend()(gmailConfig).then((result) => {
-            verificationModel.createVerification({'userID' : userID, 'verifyCode' : verifyCode, 'expiredDate' : Date.now() + 99999}).then((result) =>{
+            
+            tokenModel.createToken({'userID' : userID, 'tokenCode' : verifyCode, 'expiredDate' : Date.now() + 99999, 'tokenID' : 'FORGOT_PASS'}).then((result) =>{
                 res.status(200).send({'statusCode' : 200, 'message' : `The verification code is sent to your email ( ${email} )`, 'data' : {'userID' : userID}}).end()
             }).catch((err) => {
-                throw new Error('Error Creating Verification')
+                console.log(err)
+                res.status(500).send({'statusCode' : 500, 'message' : 'Internal Server Error'}).end()
             })
+
         }).catch((err) => {
-           throw new Error('Error Sending Email')
+            console.log(err)
+            res.status(500).send({'statusCode' : 500, 'message' : 'Internal Server Error'}).end()
         })
         
     }).catch((err) => {
+        console.log(err)
         res.status(500).send({'statusCode' : 500, 'message' : 'Internal Server Error'}).end()
     })
 }
+
+
+const logout = (req, res) => {
+    const token = req.body.token
+    tokenModel.createToken({'tokenCode' : token, 'tokenID' : 'TOKEN_BLACKLIST'}).then(result => {
+        return res.status(200).send({'statusCode' : 200, 'message' : 'Logout Success'}).end()
+    }).catch(err => {
+        console.log(err)
+        return res.status(500).send({'statusCode' : 500, 'message' : 'Internal Server Error'}).end()
+    })
+}
+
+
 
 const forgotVerify = (req,res) => {
     const userData = {'userID' : req.body.userID,
                       'verifyCode' : req.body.verifyCode,
                       'password': req.body.password}
     
-    verificationModel.getVerification({'userID' : userData.userID, 'verifyCode' : userData.verifyCode}).then((result) => {
+    tokenModel.getToken({'userID' : userData.userID, 'tokenCode' : userData.verifyCode, 'tokenID' : 'FORGOT_PASS'}).then((result) => {
         if( result === null ){
             return res.status(422).send({'statusCode' : 422, 'message' : 'Invalid Code'}).end()
         }
 
         if( result.expiredDate < Date.now() ){
-            verificationModel.deleteVerification({'userID' : result.userID}).then(() => {
+            tokenModel.deleteToken({'userID' : result.userID}).then(() => {
                 res.status(422).send({'statusCode' : 422, 'message' : 'Verification Code is expired'}).end()
             }).catch((err) => {
                 throw new Error('Error Deleting Verification')
@@ -127,7 +138,7 @@ const forgotVerify = (req,res) => {
 
         UsersModel.updateUser({'userID' : userData.userID}, {'password' : bcryptjs.hashSync(userData.password, 8)}).then(() => {
             
-            verificationModel.deleteVerification({'userID' : result.userID}).then(() => {
+            tokenModel.deleteToken({'userID' : result.userID}).then(() => {
                res.status(200).send({'statusCode' : 200, 'message' : 'Your password account sucessfully changed'}).end()
             }).catch((err) => {
                 throw new Error('Error Deleteing Verification')
@@ -149,3 +160,4 @@ exports.register = register
 exports.login = login
 exports.forgotPassword = forgotPassword
 exports.forgotVerify = forgotVerify
+exports.logout = logout
