@@ -107,7 +107,7 @@ const forgotPassword = ( req, res ) => {
 
 
 const logout = (req, res) => {
-    const token = req.body.token
+    const token = req.headers.authorization
     tokenModel.createToken({'tokenCode' : token, 'tokenID' : 'TOKEN_BLACKLIST'}).then(result => {
         return res.status(200).send({'statusCode' : 200, 'message' : 'Logout Success'}).end()
     }).catch(err => {

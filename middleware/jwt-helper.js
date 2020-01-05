@@ -5,7 +5,8 @@ const tokenModel = require('../models/TokenModel')
 const secret = fs.readFileSync('./bin/jwt.secret.key')
 
 const jwtVerifyMiddleware = (req, res, next) => {
-    const token = req.body.token
+    const token = req.headers.authorization
+    
     if( !token ) return res.status(403).send({'statusCode' : 403, 'message' : 'Forbidden Access'}).end()
 
     tokenModel.getToken({'tokenID' : 'TOKEN_BLACKLIST', 'tokenCode' : token}).then(result => {
