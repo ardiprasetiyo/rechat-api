@@ -6,7 +6,7 @@ const gmailSend = require('gmail-send')
 const gmailConfig = {user : 'rechatmessaging@gmail.com',
                      pass : 'apawelah'}
 
-const register = ( req, res ) => {
+exports.register = async ( req, res ) => {
 
     let userData = {
         'username': req.body.username,
@@ -16,97 +16,104 @@ const register = ( req, res ) => {
         'email': req.body.email
     }
 
-    let result = UsersModel.createUser(userData)
-    result.then((result) => {
-        return res.status(200).send({'statusCode' : 200, 'message' : 'Your account now is registered'}).end()
-    }).catch( (err) => {
-        if( err.code === 11000 ) { 
-            return res.status(422).send({'statusCode' : 422, 'message' : 'Username is already taken'}).end() 
+    try{
+       await UsersModel.createUser(userData)
+       return res.status(200).send({'statusCode' : 200, 'message' : 'Your account now is registered'}).end()
+    } catch(e) {
+        if( e.code === 11000 ) { 
+            const errField = e.errmsg.split('index: ')[1].split('_1')[0]
+            return res.status(422).send({'statusCode' : 422, 'message' : `${errField} is already taken`}).end() 
         } else { 
             return res.status(500).send({'statusCode' : 500, 'message' : 'Something wrong, try again'}).end() 
         }
-    })
-
-    
+    }
 }
 
-const login = (req, res) =>{
+exports.login = async (req, res) =>{
     const userData = { 'username': req.body.username,
                        'password': req.body.password }
     
-    const userDatabase = UsersModel.getUser({'username' : userData.username})
-    userDatabase.then((result) => {
-        if( result === null ){
-            res.status(401).send({'statusCode' : 401, 'message' : 'Account not registered'}).end()
+    try {
+        const userDatabase = await UsersModel.getUser({'username' : userData.username})
+        
+        if( userDatabase === null ){
+            throw new Error('USER_NOT_REGISTERED')
         }
 
-        const username = result.username
-        const password = result.password
-        const userID = result.userID
-        const fullname = result.fullname
-        const bio = result.biography
-        const contact = result.contact
-        const profilePicture = result.profilePicture
+        const username = userDatabase.username
+        const password = userDatabase.password
+        const userID = userDatabase.userID
+        const fullname = userDatabase.fullname
+        const bio = userDatabase.biography
+        const contact = userDatabase.contact
+        const profilePicture = userDatabase.profilePicture
 
+
+        try{
         // Checking For Matches Hash Bcrypt
-
-        bcryptjs.compare(userData.password, password).then((result) => {
-            if( !result ){
-                res.status(403).send({'statusCode' : 403, 'message' : `Username ${username} founded but invalid password`}).end()
+        const verifyPassword = await bcryptjs.compare(userData.password, password)
+            if( !verifyPassword ){
+               throw new Error('PASSWORD_NOT_MATCH')
             }
-        })
-        
+        } finally{
+            
+        }
 
-        const token = jwtHelper.jwtGenerate({'userID' : userID}, ( 60 * 60 * 24 * 7 * 4 ))
-
-        // Preparing UserData For Response
+        const token = await jwtHelper.jwtGenerate({'userID' : userID}, ( 60 * 60 * 24 * 7 * 4 ))
         const userJSON = {userID, username, fullname, bio, contact, profilePicture, token}
-
         res.status(200).send({'statusCode' : 200, 'message' : 'Login Sucess', 'data' : userJSON}).end()
 
-    }).catch((err) => {
-        console.log(err)
-        res.status(500).send({'statusCode' : 500, 'message' : 'Something Wrong'})
-    })
 
+    } catch(e) {
+        if( e.message === 'USER_NOT_REGISTERED' ){
+            return res.status(401).send({'statusCode' : 401, 'message' : 'Account not registered'}).end()
+        }
+        else if( e.message === 'PASSWORD_NOT_MATCH' ){
+            return res.status(403).send({'statusCode' : 403, 'message' : "Password doesn't match"}).end()
+        } else {
+            return res.status(500).send({'statusCode' : 500, 'message' : 'Internal Server Error'}).end()
+        }
+    }
 }
 
 
-const forgotPassword = ( req, res ) => {
+exports.forgotPassword = async ( req, res ) => {
     const email = req.body.email
 
-    UsersModel.getUser({'email' : email}, ['email', 'userID']).then((result) => {
-        
-        const userEmail = result.email
-        const userID = result.userID
-        const verifyCode = Math.random().toString().split('.')[1].substr(0, 4)
+    try {
 
-        gmailConfig.to = userEmail
-        gmailConfig.subject = 'Password Recovery'
-        gmailConfig.text = `Your Code Is ${verifyCode}`
-        
-        gmailSend()(gmailConfig).then((result) => {
-            
-            tokenModel.createToken({'userID' : userID, 'tokenCode' : verifyCode, 'expiredDate' : Date.now() + 99999, 'tokenID' : 'FORGOT_PASS'}).then((result) =>{
-                res.status(200).send({'statusCode' : 200, 'message' : `The verification code is sent to your email ( ${email} )`, 'data' : {'userID' : userID}}).end()
-            }).catch((err) => {
-                console.log(err)
-                res.status(500).send({'statusCode' : 500, 'message' : 'Internal Server Error'}).end()
-            })
+    const userData = await UsersModel.getUser({'email' : email}, ['email', 'userID'])
 
-        }).catch((err) => {
-            console.log(err)
-            res.status(500).send({'statusCode' : 500, 'message' : 'Internal Server Error'}).end()
-        })
-        
-    }).catch((err) => {
-        console.log(err)
-        res.status(500).send({'statusCode' : 500, 'message' : 'Internal Server Error'}).end()
-    })
+    if( userData == null ){
+        throw new Error('USER_NOT_FOUND')
+    }
+    
+    const userEmail = userData.email
+    const userID = userData.userID
+    const verifyCode = Math.random().toString().split('.')[1].substr(0, 4)
+
+    gmailConfig.to = userEmail
+    gmailConfig.subject = 'Password Recovery'
+    gmailConfig.text = `Your Code Is ${verifyCode}`
+
+    try{
+        await gmailSend()(gmailConfig)
+        await tokenModel.createToken({'userID' : userID, 'tokenCode' : verifyCode, 'expiredDate' : Date.now() + 99999, 'tokenID' : 'FORGOT_PASS'})
+        return res.status(200).send({'statusCode' : 200, 'message' : `Email is sent to your email account ( ${userEmail} )`, 'data' : {'userID' : userID}}).end()
+    } finally{
+    }
+
+    }catch(e) {
+        if( e.message === 'USER_NOT_FOUND' ){
+            return res.status(403).send({'statusCode' : 403, 'message' : 'Email not registered to any user account'}).end()
+        } else {
+            return res.status(500).send({'statusCode' : 500, 'message' : 'Internal Server Error'}).end()
+        }
+    }
 }
 
 
-const logout = (req, res) => {
+exports.logout = (req, res) => {
     const token = req.headers.authorization
     tokenModel.createToken({'tokenCode' : token, 'tokenID' : 'TOKEN_BLACKLIST'}).then(result => {
         return res.status(200).send({'statusCode' : 200, 'message' : 'Logout Success'}).end()
@@ -118,46 +125,35 @@ const logout = (req, res) => {
 
 
 
-const forgotVerify = (req,res) => {
+exports.forgotVerify = async (req,res) => {
     const userData = {'userID' : req.body.userID,
                       'verifyCode' : req.body.verifyCode,
                       'password': req.body.password}
-    
-    tokenModel.getToken({'userID' : userData.userID, 'tokenCode' : userData.verifyCode, 'tokenID' : 'FORGOT_PASS'}).then((result) => {
-        if( result === null ){
-            return res.status(422).send({'statusCode' : 422, 'message' : 'Invalid Code'}).end()
+    try{
+        const verifyToken = await tokenModel.getToken({'userID' : userData.userID, 'tokenCode' : userData.verifyCode, 'tokenID' : 'FORGOT_PASS'})
+        if( verifyToken === null ){
+            throw new Error('INVALID_TOKEN')
         }
 
-        if( result.expiredDate < Date.now() ){
-            tokenModel.deleteToken({'userID' : result.userID}).then(() => {
-                res.status(422).send({'statusCode' : 422, 'message' : 'Verification Code is expired'}).end()
-            }).catch((err) => {
-                throw new Error('Error Deleting Verification')
-            })
-        }
-
-        UsersModel.updateUser({'userID' : userData.userID}, {'password' : bcryptjs.hashSync(userData.password, 8)}).then(() => {
+        try {
             
-            tokenModel.deleteToken({'userID' : result.userID}).then(() => {
-               res.status(200).send({'statusCode' : 200, 'message' : 'Your password account sucessfully changed'}).end()
-            }).catch((err) => {
-                throw new Error('Error Deleteing Verification')
-            })
+            if( verifyToken.expiredDate > Date.now() ){
+                await tokenModel.deleteToken({'userID' : userData.userID})
+                return res.status(200).send({'statusCode' : 200, 'message' : 'Your password account sucessfully changed'}).end()
+            } else {
+                throw new Error('TOKEN_EXPIRED')
+            }
 
-        }).catch((err) => {
-            throw new Error('Error Updating User')
-        })
-
-
-    }).catch((err) => {
-        console.log(err)
-    })
+        }finally{
+        }
+        
+    }catch(e){
+        if( e.message === 'INVALID_TOKEN' ){
+            return res.status(422).send({'statusCode' : 422, 'message' : 'Invalid Token'}).end()
+        } else if ( e.message === 'TOKEN_EXPIRED' ){
+            return res.status(422).send({'statusCode' : 422, 'message' : 'Expired Token'}).end()
+        } else {
+            return res.status(500).send({'statusCode' : 500, 'message' : 'Internal Server Error'}).end()
+        }
+    }
 }
-
-
-
-exports.register = register
-exports.login = login
-exports.forgotPassword = forgotPassword
-exports.forgotVerify = forgotVerify
-exports.logout = logout
