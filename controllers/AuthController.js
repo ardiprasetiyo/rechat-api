@@ -12,7 +12,7 @@ exports.register = async ( req, res ) => {
         'username': req.body.username,
         'password': bcryptjs.hashSync(req.body.password, 8),
         'fullname': req.body.fullname,
-        'biography': req.body.bio,
+        'biography': req.body.biography,
         'email': req.body.email
     }
 
@@ -128,7 +128,7 @@ exports.logout = (req, res) => {
 exports.forgotVerify = async (req,res) => {
     const userData = {'userID' : req.body.userID,
                       'verifyCode' : req.body.verifyCode,
-                      'password': req.body.password}
+                      'password': bcryptjs.hashSync(req.body.password, 8)}
     try{
         const verifyToken = await tokenModel.getToken({'userID' : userData.userID, 'tokenCode' : userData.verifyCode, 'tokenID' : 'FORGOT_PASS'})
         if( verifyToken === null ){
@@ -139,6 +139,7 @@ exports.forgotVerify = async (req,res) => {
             
             if( verifyToken.expiredDate > Date.now() ){
                 await tokenModel.deleteToken({'userID' : userData.userID})
+                await UsersModel.updateUser({'password' : userData.password})
                 return res.status(200).send({'statusCode' : 200, 'message' : 'Your password account sucessfully changed'}).end()
             } else {
                 throw new Error('TOKEN_EXPIRED')

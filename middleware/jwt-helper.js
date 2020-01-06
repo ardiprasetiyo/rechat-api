@@ -25,7 +25,7 @@ exports.jwtVerifyMiddleware = async (req, res, next) => {
       next()
 
     } catch(err) {
-        return res.status(403).send({'statusCode' : 403, 'message' : 'Token Expired'}).end()
+        return res.status(403).send({'statusCode' : 403, 'message' : `${err.message}`}).end()
     }
 
     

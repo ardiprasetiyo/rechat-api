@@ -1,5 +1,10 @@
 const { check, validationResult } = require('express-validator')
 
+
+// ---------------------------//
+//    AUTH VALIDATION SCHEMA  //
+// ---------------------------//             
+
 exports.registerSchema = (req, res, next) => {
     return[ check('username').
             trim().
@@ -88,8 +93,63 @@ exports.forgotVerifySchema = (req, res) => {
 }
 
 
+
+
+// ---------------------------//
+//    USER VALIDATION SCHEMA  //
+// ---------------------------//    
+
+
+exports.updateProfileSchema = (req, res) => {
+    return [ check('fullname').
+            trim().
+                escape(),
+        
+            check('biography').
+            trim().
+            escape().
+            isLength({max : 150}).
+            withMessage('Bio maximum length is 150 Characters')]
+}
+
+
+exports.changeProfilePasswordSchema = (req, res) => {
+    return [ check('password').
+            trim().
+            escape().
+            isLength({min: 8}).
+            withMessage('Password minimum 8 characters length').
+            notEmpty().
+            withMessage('New Password is required'),
+        
+            check('re-password').
+            trim().
+            escape().
+            notEmpty().
+            withMessage('Password Confirmation is required').
+            custom((value, {req}) => {
+                if( value !== req.body.password ){
+                    throw new Error('Password Doesnt Match')
+                }else {
+                    return value
+                }
+            }),
+        
+            check('oldPassword').
+            trim().
+            escape().
+            notEmpty().
+            withMessage('Old Password is required')]
+} 
+
+
+
+
+
+
 exports.validate = (req, res, next) => {
     const errors = validationResult(req);
     if( !errors.isEmpty() ) return res.status(422).send({'statusCode' : 422, 'message' : errors}).end()
     next()
 }
+
