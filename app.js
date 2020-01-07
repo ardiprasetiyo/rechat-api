@@ -4,9 +4,12 @@ const app = express()
 const path = require('path')
 const cookieParser = require('cookie-parser')
 const logger = require('morgan')
+const statusMonitor = require('express-status-monitor')
 
 const mongoose = require('mongoose')
 const mongoDB = 'mongodb+srv://admin:p@55w0rd@rechat-1ri09.mongodb.net/rechat?retryWrites=true&w=majority'
+
+app.use(statusMonitor())
 
 mongoose.connect(mongoDB, { useNewUrlParser: true })
 const db = mongoose.connection;
