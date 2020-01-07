@@ -1,7 +1,7 @@
 const userModel = require('../models/UsersModel')
 const bcryptjs = require('bcryptjs')
 
-exports.getProfile = async (req, res) => {
+exports.getUserProfile = async (req, res) => {
     const userID = req.decodedToken.userID
     try{
         const userData = await userModel.getUser({'userID' : userID}, ['username', 'fullname', 'biography', 'profilePictures'])
@@ -20,7 +20,7 @@ exports.getProfile = async (req, res) => {
 }
 
 
-exports.updateProfile = async(req, res) => {
+exports.updateUserProfile = async(req, res) => {
     const requestData = req.body
     const userID = req.decodedToken.userID
     let newData = {}
@@ -46,7 +46,7 @@ exports.updateProfile = async(req, res) => {
 }
 
 
-exports.updateProfilePassword = async (req, res) => {
+exports.updateUserPassword = async (req, res) => {
     const userID = req.decodedToken.userID
 
     try{
@@ -79,5 +79,24 @@ exports.updateProfilePassword = async (req, res) => {
         }else {
             return res.status(500).send({'statusCode' : 500, 'message' : 'Internal Server Error'})
         }
+    }
+}
+
+exports.deleteUserAccount = async (req, res) => {
+    const userID = req.decodedToken.userID
+    try{
+        const deletedUser = await userModel.deleteUser({'userID': userID})
+        if( deletedUser.n < 1 ){
+            throw new Error('NO_ACCOUNT_DELETED')
+        } else {
+            res.status(200).send({'statusCode': 200, 'message': 'Account is deleted'})
+        }
+    }catch(e){
+        if( e.message === 'NO_ACCOUNT_DELETED' ){
+            return res.status(422).send({'statusCode': 422, 'message': 'No Account Deleted' })
+        } else {
+            return res.status(500).send({'statusCode': 500, 'message': 'Internal server error' })
+        }
+        
     }
 }

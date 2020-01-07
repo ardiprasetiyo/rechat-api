@@ -20,7 +20,7 @@ db.once('open', () => {
 
 // Route Instance
 const authRouter = require('./routes/auth')
-const userRouter = require('./routes/user')
+const userRouter = require('./routes/account')
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
