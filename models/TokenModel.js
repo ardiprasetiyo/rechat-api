@@ -25,7 +25,7 @@ const Token = mongoose.model('verification', tokenSchema, 'token')
 
 let TokenModel = { 
   
-  'createToken' : 
+  'create' : 
     async function createToken(data){
       return await Token.create({
           userID: data.userID,
@@ -35,12 +35,12 @@ let TokenModel = {
       })
     },
 
-  'deleteToken' : 
+  'delete' : 
    async function deleteToken(where){
     return await Token.deleteOne(where)
    },
 
-  'getToken' : 
+  'get' : 
    async function getToken(where, select= undefined){
      return await Token.findOne(where, select)
    }

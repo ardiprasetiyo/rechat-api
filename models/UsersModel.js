@@ -53,7 +53,7 @@ const User = mongoose.model('user', userSchema, 'user')
 
 let UserModel = { 
   
-  'createUser' : 
+  'create' : 
     async function createUser(data){
       return await User.create({
           username:  data.username,
@@ -64,17 +64,17 @@ let UserModel = {
       })
     },
     
-  'updateUser' : 
+  'update' : 
     async function updateUser(where, updates){
       return await User.updateOne(where, updates)
     },
 
-  'deleteUser' : 
+  'delete' : 
    async function deleteUser(where){
     return await User.deleteOne(where)
    },
 
-  'getUser' : 
+  'get' : 
    async function getUser(where, select=undefined){
      return await User.findOne(where, select)
    }

@@ -1,12 +1,18 @@
-const UsersModel = require('../models/UsersModel')
-const tokenModel = require('../models/TokenModel')
-const jwtHelper = require('../middleware/jwt-helper')
+// Modules
+const jwt = require('../middleware/jwt-helper')
 const bcryptjs = require('bcryptjs')
 const gmailSend = require('gmail-send')
 const gmailConfig = {user : 'rechatmessaging@gmail.com',
                      pass : 'apawelah'}
 
-exports.register = async ( req, res ) => {
+// Models
+const UsersModel = require('../models/UsersModel')
+const TokenModel = require('../models/TokenModel')
+
+
+// Controllers Logic
+exports.register = async ( req, res ) => 
+{
 
     let userData = {
         'username': req.body.username,
@@ -17,9 +23,10 @@ exports.register = async ( req, res ) => {
     }
 
     try{
-       await UsersModel.createUser(userData)
+       await UsersModel.create(userData)
        return res.status(200).send({'statusCode' : 200, 'message' : 'Your account now is registered'}).end()
     } catch(e) {
+        console.log(e.message)
         if( e.code === 11000 ) { 
             const errField = e.errmsg.split('index: ')[1].split('_1')[0]
             return res.status(422).send({'statusCode' : 422, 'message' : `${errField} is already taken`}).end() 
@@ -29,12 +36,13 @@ exports.register = async ( req, res ) => {
     }
 }
 
-exports.login = async (req, res) =>{
+exports.login = async (req, res) =>
+{
     const userData = { 'username': req.body.username,
                        'password': req.body.password }
     
     try {
-        const userDatabase = await UsersModel.getUser({'username' : userData.username})
+        const userDatabase = await UsersModel.get({'username' : userData.username})
         
         if( userDatabase === null ){
             throw new Error('USER_NOT_REGISTERED')
@@ -59,12 +67,13 @@ exports.login = async (req, res) =>{
             
         }
 
-        const token = await jwtHelper.jwtGenerate({'userID' : userID}, ( 60 * 60 * 24 * 7 * 4 ))
+        const token = await jwt.generate({'userID' : userID}, ( 60 * 1 ))
         const userJSON = {userID, username, fullname, bio, contact, profilePicture, token}
         res.status(200).send({'statusCode' : 200, 'message' : 'Login Sucess', 'data' : userJSON}).end()
 
 
     } catch(e) {
+        console.log(e.message)
         if( e.message === 'USER_NOT_REGISTERED' ){
             return res.status(401).send({'statusCode' : 401, 'message' : 'Account not registered'}).end()
         }
@@ -77,12 +86,13 @@ exports.login = async (req, res) =>{
 }
 
 
-exports.forgotPassword = async ( req, res ) => {
+exports.forgotPassword = async ( req, res ) => 
+{
     const email = req.body.email
 
     try {
 
-    const userData = await UsersModel.getUser({'email' : email}, ['email', 'userID'])
+    const userData = await UsersModel.get({'email' : email}, ['email', 'userID'])
 
     if( userData == null ){
         throw new Error('USER_NOT_FOUND')
@@ -94,16 +104,17 @@ exports.forgotPassword = async ( req, res ) => {
 
     gmailConfig.to = userEmail
     gmailConfig.subject = 'Password Recovery'
-    gmailConfig.text = `Your Code Is ${verifyCode}`
+    gmailConfig.text = `Your Code Is ${verifyCode}, It Will Be Expired In 15 Minutes`
 
     try{
         await gmailSend()(gmailConfig)
-        await tokenModel.createToken({'userID' : userID, 'tokenCode' : verifyCode, 'expiredDate' : Date.now() + 99999, 'tokenID' : 'FORGOT_PASS'})
+        await TokenModel.create({'userID' : userID, 'tokenCode' : verifyCode, 'expiredDate' : Date.now() + 900000, 'tokenID' : 'FORGOT_PASS'})
         return res.status(200).send({'statusCode' : 200, 'message' : `Email is sent to your email account ( ${userEmail} )`, 'data' : {'userID' : userID}}).end()
     } finally{
     }
 
     }catch(e) {
+        console.log(e.message)
         if( e.message === 'USER_NOT_FOUND' ){
             return res.status(403).send({'statusCode' : 403, 'message' : 'Email not registered to any user account'}).end()
         } else {
@@ -113,9 +124,10 @@ exports.forgotPassword = async ( req, res ) => {
 }
 
 
-exports.logout = (req, res) => {
+exports.logout = (req, res) => 
+{
     const token = req.headers.authorization
-    tokenModel.createToken({'tokenCode' : token, 'tokenID' : 'TOKEN_BLACKLIST'}).then(result => {
+    TokenModel.create({'tokenCode' : token, 'tokenID' : 'TOKEN_BLACKLIST'}).then(result => {
         return res.status(200).send({'statusCode' : 200, 'message' : 'Logout Success'}).end()
     }).catch(err => {
         console.log(err)
@@ -130,7 +142,7 @@ exports.forgotVerify = async (req,res) => {
                       'verifyCode' : req.body.verifyCode,
                       'password': bcryptjs.hashSync(req.body.password, 8)}
     try{
-        const verifyToken = await tokenModel.getToken({'userID' : userData.userID, 'tokenCode' : userData.verifyCode, 'tokenID' : 'FORGOT_PASS'})
+        const verifyToken = await TokenModel.get({'userID' : userData.userID, 'tokenCode' : userData.verifyCode, 'tokenID' : 'FORGOT_PASS'})
         if( verifyToken === null ){
             throw new Error('INVALID_TOKEN')
         }
@@ -138,7 +150,7 @@ exports.forgotVerify = async (req,res) => {
         try {
             
             if( verifyToken.expiredDate > Date.now() ){
-                await tokenModel.deleteToken({'userID' : userData.userID})
+                await TokenModel.delete({'userID' : userData.userID})
                 await UsersModel.updateUser({'password' : userData.password})
                 return res.status(200).send({'statusCode' : 200, 'message' : 'Your password account sucessfully changed'}).end()
             } else {

@@ -1,10 +1,16 @@
-const userModel = require('../models/UsersModel')
+// Library
 const bcryptjs = require('bcryptjs')
 
-exports.getUserProfile = async (req, res) => {
+// Model
+const UserModel = require('../models/UsersModel')
+
+// Controllers Logic
+exports.get = async (req, res) => 
+
+{
     const userID = req.decodedToken.userID
     try{
-        const userData = await userModel.getUser({'userID' : userID}, ['username', 'fullname', 'biography', 'profilePictures'])
+        const userData = await UserModel.get({'userID' : userID}, ['username', 'fullname', 'biography', 'profilePicture'])
 
         if( userData === null ){
             throw new Error('ACCOUNT_NOT_FOUND')
@@ -20,7 +26,9 @@ exports.getUserProfile = async (req, res) => {
 }
 
 
-exports.updateUserProfile = async(req, res) => {
+exports.update = async(req, res) => 
+
+{
     const requestData = req.body
     const userID = req.decodedToken.userID
     let newData = {}
@@ -31,7 +39,7 @@ exports.updateUserProfile = async(req, res) => {
     })
 
     try{
-        const updatedData = await userModel.updateUser({'userID' : userID}, newData)
+        const updatedData = await UserModel.update({'userID' : userID}, newData)
         if( updatedData.nModified < 1){
             throw new Error('NO_UPDATE_CHANGES')
         }
@@ -46,19 +54,21 @@ exports.updateUserProfile = async(req, res) => {
 }
 
 
-exports.updateUserPassword = async (req, res) => {
+exports.updatePassword = async (req, res) => 
+
+{
     const userID = req.decodedToken.userID
 
     try{
-        const userData = await userModel.getUser({'userID' : userID}, ['password'])
+        const userData = await UserModel.get({'userID' : userID}, ['password'])
         if( userData === null ){
             throw new Error('ACCOUNT_NOT_FOUND')
         } 
 
-        const passwordVerify = await bcryptjs.compare(req.body.oldPassword, userData.password)
+        const passwordVerify = await bcryptjs.compare(req.body.oldPassword, userData.password)  
 
         if( passwordVerify ){
-            const updatedData = await userModel.updateUser({'userID' : userID}, {'password' : bcryptjs.hashSync(req.body.password, 8)})
+            const updatedData = await UserModel.update({'userID' : userID}, {'password' : bcryptjs.hashSync(req.body.password, 8)})
             if( updatedData.nModified < 1 ){
                 throw new Error('NO_UPDATE_CHANGES')
             }
@@ -82,10 +92,12 @@ exports.updateUserPassword = async (req, res) => {
     }
 }
 
-exports.deleteUserAccount = async (req, res) => {
+exports.delete = async (req, res) => 
+
+{
     const userID = req.decodedToken.userID
     try{
-        const deletedUser = await userModel.deleteUser({'userID': userID})
+        const deletedUser = await UserModel.delete({'userID': userID})
         if( deletedUser.n < 1 ){
             throw new Error('NO_ACCOUNT_DELETED')
         } else {

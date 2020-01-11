@@ -1,14 +1,28 @@
+// Modules
 const express = require('express');
 const router = express.Router();
-const AuthController = require('../controllers/AuthController')
-const jwtHelper = require('../middleware/jwt-helper')
-const validationSchema = require('../middleware/validator-schema')
+const jwt = require('../middleware/jwt-helper')
+const validatorSchema = require('../middleware/validator-schema')
 
-/* GET home page. */
-router.post('/register',  validationSchema.registerSchema(), validationSchema.validate, AuthController.register)
-router.post('/login', validationSchema.loginSchema(), validationSchema.validate, AuthController.login)
-router.post('/forgot', AuthController.forgotPassword)
-router.post('/forgot/verify', validationSchema.forgotVerifySchema(), validationSchema.validate, AuthController.forgotVerify)
-router.post('/logout', jwtHelper.jwtVerifyMiddleware, AuthController.logout)
+// Controller
+const Auth = require('../controllers/AuthController')
+
+
+// Routes
+router.post('/register',validatorSchema.registerAccount(), 
+                        validatorSchema.validate, 
+                        Auth.register)
+
+router.post('/login',validatorSchema.loginAccount(), 
+                     validatorSchema.validate, 
+                     Auth.login)
+
+router.post('/forgot', Auth.forgotPassword)
+
+router.post('/forgot/verify',validatorSchema.forgotPassword(),
+                             validatorSchema.validate, 
+                             Auth.forgotVerify)
+
+router.post('/logout', jwt.verify, Auth.logout)
 
 module.exports = router;

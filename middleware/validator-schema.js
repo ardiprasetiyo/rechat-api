@@ -5,7 +5,7 @@ const { check, validationResult } = require('express-validator')
 //    AUTH VALIDATION SCHEMA  //
 // ---------------------------//             
 
-exports.registerSchema = (req, res, next) => {
+exports.registerAccount = (req, res, next) => {
     return[ check('username').
             trim().
             notEmpty().
@@ -46,7 +46,7 @@ exports.registerSchema = (req, res, next) => {
 }
 
 
-exports.loginSchema = (req, res) => {
+exports.loginAccount = (req, res) => {
     return [ check('username').
              trim().
              notEmpty().
@@ -58,7 +58,7 @@ exports.loginSchema = (req, res) => {
             withMessage('Password is required')]
 } 
 
-exports.forgotVerifySchema = (req, res) => {
+exports.forgotPassword = (req, res) => {
     return [ check('userID').trim().
              notEmpty().
              withMessage('No UserID Found').
@@ -100,7 +100,7 @@ exports.forgotVerifySchema = (req, res) => {
 // ---------------------------//    
 
 
-exports.updateProfileSchema = (req, res) => {
+exports.updateAccount = (req, res) => {
     return [ check('fullname').
             trim().
                 escape(),
@@ -113,7 +113,7 @@ exports.updateProfileSchema = (req, res) => {
 }
 
 
-exports.changeProfilePasswordSchema = (req, res) => {
+exports.updateAccountPassword = (req, res) => {
     return [ check('password').
             trim().
             escape().
