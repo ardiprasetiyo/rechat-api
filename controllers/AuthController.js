@@ -67,8 +67,10 @@ exports.login = async (req, res) =>
             
         }
 
-        const token = await jwt.generate({'userID' : userID}, ( 60 * 1 ))
-        const userJSON = {userID, username, fullname, bio, contact, profilePicture, token}
+        const token = await jwt.generate({'userID' : userID}, ( 60 * 15 ))
+        const jwtToken = token.jwt
+        const jwtRefreshToken = token.jwtRefresh
+        const userJSON = {userID, username, fullname, bio, contact, profilePicture, jwtToken, jwtRefreshToken}
         res.status(200).send({'statusCode' : 200, 'message' : 'Login Sucess', 'data' : userJSON}).end()
 
 
@@ -122,19 +124,6 @@ exports.forgotPassword = async ( req, res ) =>
         }
     }
 }
-
-
-exports.logout = (req, res) => 
-{
-    const token = req.headers.authorization
-    TokenModel.create({'tokenCode' : token, 'tokenID' : 'TOKEN_BLACKLIST'}).then(result => {
-        return res.status(200).send({'statusCode' : 200, 'message' : 'Logout Success'}).end()
-    }).catch(err => {
-        console.log(err)
-        return res.status(500).send({'statusCode' : 500, 'message' : 'Internal Server Error'}).end()
-    })
-}
-
 
 
 exports.forgotVerify = async (req,res) => {

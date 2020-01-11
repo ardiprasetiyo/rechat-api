@@ -23,6 +23,6 @@ router.post('/forgot/verify',validatorSchema.forgotPassword(),
                              validatorSchema.validate, 
                              Auth.forgotVerify)
 
-router.post('/logout', jwt.verify, Auth.logout)
+router.post('/token', jwt.verifyRefresh)
 
 module.exports = router;
