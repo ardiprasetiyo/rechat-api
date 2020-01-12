@@ -10,12 +10,12 @@ const Users = require('../controllers/UsersController')
 // Routes
 router.get('/', jwt.verify, Users.get)
 
-router.post('/', jwt.verify, 
+router.put('/', jwt.verify, 
                  validator.updateAccount(), 
                  validator.validate, 
                  Users.update)
 
-router.post('/password', jwt.verify, 
+router.patch('/password', jwt.verify, 
                           validator.updateAccountPassword(), 
                           validator.validate, 
                           Users.updatePassword)

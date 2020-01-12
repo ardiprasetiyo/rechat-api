@@ -24,7 +24,7 @@ exports.register = async ( req, res ) =>
 
     try{
        await UsersModel.create(userData)
-       return res.status(200).send({'statusCode' : 200, 'message' : 'Your account now is registered'}).end()
+       return res.status(201).send({'statusCode' : 201, 'message' : 'Your account now is registered'}).end()
     } catch(e) {
         console.log(e.message)
         if( e.code === 11000 ) { 
@@ -71,7 +71,7 @@ exports.login = async (req, res) =>
         const jwtToken = token.jwt
         const jwtRefreshToken = token.jwtRefresh
         const userJSON = {userID, username, fullname, bio, contact, profilePicture, jwtToken, jwtRefreshToken}
-        res.status(200).send({'statusCode' : 200, 'message' : 'Login Sucess', 'data' : userJSON}).end()
+        res.status(201).send({'statusCode' : 201, 'message' : 'Login Sucess', 'data' : userJSON}).end()
 
 
     } catch(e) {
@@ -111,7 +111,7 @@ exports.forgotPassword = async ( req, res ) =>
     try{
         await gmailSend()(gmailConfig)
         await TokenModel.create({'userID' : userID, 'tokenCode' : verifyCode, 'expiredDate' : Date.now() + 900000, 'tokenID' : 'FORGOT_PASS'})
-        return res.status(200).send({'statusCode' : 200, 'message' : `Email is sent to your email account ( ${userEmail} )`, 'data' : {'userID' : userID}}).end()
+        return res.status(201).send({'statusCode' : 201, 'message' : `Email is sent to your email account ( ${userEmail} )`, 'data' : {'userID' : userID}}).end()
     } finally{
     }
 
@@ -140,8 +140,8 @@ exports.forgotVerify = async (req,res) => {
             
             if( verifyToken.expiredDate > Date.now() ){
                 await TokenModel.delete({'userID' : userData.userID})
-                await UsersModel.updateUser({'password' : userData.password})
-                return res.status(200).send({'statusCode' : 200, 'message' : 'Your password account sucessfully changed'}).end()
+                await UsersModel.update({'password' : userData.password})
+                return res.status(201).send({'statusCode' : 201, 'message' : 'Your password account sucessfully changed'}).end()
             } else {
                 throw new Error('TOKEN_EXPIRED')
             }
@@ -150,6 +150,7 @@ exports.forgotVerify = async (req,res) => {
         }
         
     }catch(e){
+        console.log(e)
         if( e.message === 'INVALID_TOKEN' ){
             return res.status(422).send({'statusCode' : 422, 'message' : 'Invalid Token'}).end()
         } else if ( e.message === 'TOKEN_EXPIRED' ){
