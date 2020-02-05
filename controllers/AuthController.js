@@ -29,7 +29,7 @@ exports.register = async ( req, res ) =>
         console.log(e.message)
         if( e.code === 11000 ) { 
             const errField = e.errmsg.split('index: ')[1].split('_1')[0]
-            return res.status(400).send({'statusCode' : 400, 'message' : `${errField} is already taken`}).end() 
+            return res.status(400).send({'statusCode' : 442, 'message' : `${errField} is already taken`}).end() 
         } else { 
             return res.status(500).send({'statusCode' : 500, 'message' : 'Something wrong, try again'}).end() 
         }
