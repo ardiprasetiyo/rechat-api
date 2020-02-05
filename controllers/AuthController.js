@@ -5,6 +5,8 @@ const gmailSend = require('gmail-send')
 const gmailConfig = {user : 'rechatmessaging@gmail.com',
                      pass : 'apawelah'}
 
+const uniqid = require('uniqid')
+
 // Models
 const UsersModel = require('../models/UsersModel')
 const TokenModel = require('../models/TokenModel')
@@ -19,7 +21,8 @@ exports.register = async ( req, res ) =>
         'password': bcryptjs.hashSync(req.body.password, 8),
         'fullname': req.body.fullname,
         'biography': req.body.biography,
-        'email': req.body.email
+        'email': req.body.email,
+        'userID': uniqid()
     }
 
     try{

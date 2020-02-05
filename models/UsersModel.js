@@ -1,10 +1,9 @@
 const mongoose = require('mongoose')
-const uniqid = require('uniqid')
 
 const userSchema = new mongoose.Schema({
     userID : {
       type: String,
-      default: uniqid(),
+      required: true,
       unique: [true, 'UserID must be unique']
     },
 
@@ -60,7 +59,8 @@ let UserModel = {
           password:  data.password,
           fullname:  data.fullname,
           biography: data.biography || undefined,
-          email: data.email
+          email: data.email,
+          userID: data.userID
       })
     },
     
