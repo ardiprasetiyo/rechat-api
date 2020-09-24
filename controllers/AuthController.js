@@ -2,8 +2,8 @@
 const jwt = require('../middleware/jwt-helper')
 const bcryptjs = require('bcryptjs')
 const gmailSend = require('gmail-send')
-const gmailConfig = {user : 'rechatmessaging@gmail.com',
-                     pass : 'apawelah'}
+const gmailConfig = {user : '',
+                     pass : ''}
 
 const uniqid = require('uniqid')
 
